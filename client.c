@@ -6,7 +6,7 @@
 /*   By: eamrati <eamrati@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 14:31:04 by eamrati           #+#    #+#             */
-/*   Updated: 2023/11/11 17:52:23 by eamrati          ###   ########.fr       */
+/*   Updated: 2023/11/24 17:16:02 by eamrati          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,10 +18,36 @@ int	g_rec;
 
 void	ack(int sig, siginfo_t *info, void *ucontext)
 {
+	static int target;
+	
+	if (!target)
+		target = info->si_pid;
+	if (target != info->si_pid)
+		return ;
 	(void) sig;
 	(void) info;
 	(void) ucontext;
 	g_rec = 1;
+	if (sig == SIGUSR2)
+	{
+		ft_printf("Message received!\n");
+		exit(0);
+	}
+}
+
+void send_null(int pid)
+{
+	int inner;
+
+	inner = 0;
+	while (inner < 8 && g_rec)
+	{
+		g_rec = 0;
+		inner++;
+		kill(pid, SIGUSR1);
+		while (!g_rec)
+		;
+	}
 }
 
 void	send(int pid, char *buffer)
@@ -29,27 +55,40 @@ void	send(int pid, char *buffer)
 	int		a;
 	int		inner;
 	char	c;
+	int dbg;
 
+	dbg = 0;
 	a = 0;
+	g_rec = 1;
 	while (buffer && buffer[a])
 	{
 		c = buffer[a];
 		inner = 0;
 		while (inner < 8)
 		{
-			usleep(50);
 			g_rec = 0;
 			if (c & 0x01)
+			{
+				c >>= 1;
+				inner++;
+				if (!(inner < 8))
+					a++;
 				kill(pid, SIGUSR2);
+			}
 			else
+			{
+				c >>= 1;
+				inner++;
+				if (!(inner < 8))
+					a++;
 				kill(pid, SIGUSR1);
+			}
 			while (!g_rec)
-				pause();
-			c >>= 1;
-			inner++;
+				;
 		}
-		a++;
 	}
+	if (!buffer[a])
+		send_null(pid);
 }
 
 static t_bool	isnumber(char *arg1)
@@ -96,6 +135,7 @@ int	main(int argc, char *argv[])
 		return (1);
 	}
 	sigaction(SIGUSR1, &info, NULL);
+	sigaction(SIGUSR2, &info, NULL);
 	send(ft_atoi(argv[1]), argv[2]);
 	return (0);
 }

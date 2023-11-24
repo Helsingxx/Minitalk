@@ -6,55 +6,93 @@
 /*   By: eamrati <eamrati@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 14:31:04 by eamrati           #+#    #+#             */
-/*   Updated: 2023/11/11 17:52:16 by eamrati          ###   ########.fr       */
+/*   Updated: 2023/11/24 18:48:34 by eamrati          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "minitalk.h"
-#include <stdio.h>
-#include <unistd.h>
+#include "minitalk_bonus.h"
+
 
 int	g_rec;
 
 void	ack(int sig, siginfo_t *info, void *ucontext)
 {
+	static int target;
+	
+	if (!target)
+		target = info->si_pid;
+	if (target != info->si_pid)
+		return ;
 	(void) sig;
-	(void) info;
 	(void) ucontext;
 	g_rec = 1;
 	if (sig == SIGUSR2)
 	{
-		ft_printf("Message received!");
+		ft_printf("Message received!\n");
 		exit(0);
+	}
+}
+
+void send_null(int pid)
+{
+	int inner;
+
+	inner = 0;
+	while (inner < 8 && g_rec)
+	{
+		g_rec = 0;
+		inner++;
+		kill(pid, SIGUSR1);
+		while (!g_rec)
+		;
 	}
 }
 
 void	send(int pid, char *buffer)
 {
-	int		a;
-	int		inner;
-	char	c;
+	int			a;
+	int			inner;
+	char		c;
+	uint64_t	time;
 
 	a = 0;
-	while (buffer)
+	g_rec = 1;
+	while (buffer && buffer[a])
 	{
 		c = buffer[a];
 		inner = 0;
+		time = 0;
 		while (inner < 8)
 		{
-			usleep(50);
-			g_rec = 0;
+			*(&g_rec) = 0;
 			if (c & 0x01)
+			{
+				c >>= 1;
+				inner++;
+				if (!(inner < 8))
+					a++;
 				kill(pid, SIGUSR2);
+			}
 			else
+			{
+				c >>= 1;
+				inner++;
+				if (!(inner < 8))
+					a++;
 				kill(pid, SIGUSR1);
+			}
 			while (!g_rec)
-				pause();
-			c >>= 1;
-			inner++;
+			{
+				if (!(time++ < TIME))
+				{
+					ft_printf("Server is unavailable!\n");
+					exit(0);
+				}
+			}
 		}
-		a++;
 	}
+	if (!buffer[a])
+		send_null(pid);
 }
 
 static t_bool	isnumber(char *arg1)
@@ -81,7 +119,9 @@ static t_bool	isnumber(char *arg1)
 int	main(int argc, char *argv[])
 {
 	struct sigaction	info;
+	int					i;
 
+	i = 0;
 	ft_memset(&info, 0, sizeof(struct sigaction));
 	info.__sigaction_u.__sa_sigaction = ack;
 	info.sa_flags = SA_SIGINFO;
