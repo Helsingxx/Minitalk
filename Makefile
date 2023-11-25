@@ -18,7 +18,7 @@ OBS := $(BS:%.c=%.o)
 OBC := $(BC:%.c=%.o)
 
 
-ADDITIONAL := ft_atoi.c
+ADDITIONAL := ft_atoi.c ft_isint.c
 ADDO := $(ADDITIONAL:%.c=%.o)
 CC := cc
 CFLAGS := -Wall -Wextra -Werror

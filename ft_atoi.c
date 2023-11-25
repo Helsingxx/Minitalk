@@ -6,11 +6,10 @@
 /*   By: eamrati <eamrati@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/06 21:23:44 by eamrati           #+#    #+#             */
-/*   Updated: 2023/11/25 18:35:09 by eamrati          ###   ########.fr       */
+/*   Updated: 2023/11/25 20:39:43 by eamrati          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <stdlib.h>
 #include "ft_printf/ft_printf.h"
 
 void	*ft_memset(void *b, int c, size_t len)
