@@ -6,15 +6,29 @@
 /*   By: eamrati <eamrati@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/06 21:23:44 by eamrati           #+#    #+#             */
-/*   Updated: 2023/05/30 13:28:34 by eamrati          ###   ########.fr       */
+/*   Updated: 2023/11/25 18:35:09 by eamrati          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <stdio.h>
-#include <sys/errno.h>
-#include "minitalk.h"
+#include <stdlib.h>
+#include "ft_printf/ft_printf.h"
 
-long	ft_nbcmp(const char *s1, const char *s2)
+void	*ft_memset(void *b, int c, size_t len)
+{
+	size_t			a;
+	unsigned char	*bc;
+
+	a = 0;
+	bc = (unsigned char *)b;
+	while (a < len)
+	{
+		bc[a] = (unsigned char)c;
+		a++;
+	}
+	return (b);
+}
+
+static long	ft_nbcmp(const char *s1, const char *s2)
 {
 	size_t	a;
 	size_t	b;

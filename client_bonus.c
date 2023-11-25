@@ -6,19 +6,18 @@
 /*   By: eamrati <eamrati@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 14:31:04 by eamrati           #+#    #+#             */
-/*   Updated: 2023/11/24 18:48:34 by eamrati          ###   ########.fr       */
+/*   Updated: 2023/11/25 18:14:55 by eamrati          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minitalk_bonus.h"
 
-
 int	g_rec;
 
-void	ack(int sig, siginfo_t *info, void *ucontext)
+static void	ack(int sig, siginfo_t *info, void *ucontext)
 {
-	static int target;
-	
+	static pid_t	target;
+
 	if (!target)
 		target = info->si_pid;
 	if (target != info->si_pid)
@@ -33,9 +32,9 @@ void	ack(int sig, siginfo_t *info, void *ucontext)
 	}
 }
 
-void send_null(int pid)
+static void	send_null(pid_t pid)
 {
-	int inner;
+	int	inner;
 
 	inner = 0;
 	while (inner < 8 && g_rec)
@@ -44,11 +43,13 @@ void send_null(int pid)
 		inner++;
 		kill(pid, SIGUSR1);
 		while (!g_rec)
-		;
+			;
 	}
+	while (1)
+		;
 }
 
-void	send(int pid, char *buffer)
+static void	send(int pid, char *buffer)
 {
 	int			a;
 	int			inner;
@@ -65,30 +66,8 @@ void	send(int pid, char *buffer)
 		while (inner < 8)
 		{
 			*(&g_rec) = 0;
-			if (c & 0x01)
-			{
-				c >>= 1;
-				inner++;
-				if (!(inner < 8))
-					a++;
-				kill(pid, SIGUSR2);
-			}
-			else
-			{
-				c >>= 1;
-				inner++;
-				if (!(inner < 8))
-					a++;
-				kill(pid, SIGUSR1);
-			}
-			while (!g_rec)
-			{
-				if (!(time++ < TIME))
-				{
-					ft_printf("Server is unavailable!\n");
-					exit(0);
-				}
-			}
+			detour (&c, &inner, &a, pid);
+			detour_time(&time);
 		}
 	}
 	if (!buffer[a])
@@ -119,29 +98,28 @@ static t_bool	isnumber(char *arg1)
 int	main(int argc, char *argv[])
 {
 	struct sigaction	info;
+	struct sigaction	info2;
 	int					i;
 
 	i = 0;
-	ft_memset(&info, 0, sizeof(struct sigaction));
 	info.__sigaction_u.__sa_sigaction = ack;
 	info.sa_flags = SA_SIGINFO;
+	ft_memset(&info, 0, sizeof(struct sigaction));
+	ft_memset(&info2, 0, sizeof(struct sigaction));
+	info.__sigaction_u.__sa_sigaction = ack;
+	info.sa_flags = SA_SIGINFO;
+	info2.__sigaction_u.__sa_sigaction = ack;
+	info2.sa_flags = SA_SIGINFO;
 	if (argc != 3)
-	{
-		ft_printf("You need to enter 2 arguments only\n");
-		return (1);
-	}
+		return (ft_printf("You need to enter 2 arguments only\n"), 1);
 	if (!isnumber(argv[1]))
-	{
-		ft_printf("pid is not a number");
-		return (1);
-	}
-	if (ft_atoi(argv[1]) < 1)
-	{
-		ft_printf("Don't ruin the session!\n");
-		return (1);
-	}
-	sigaction(SIGUSR1, &info, NULL);
-	sigaction(SIGUSR2, &info, NULL);
+		return (ft_printf("pid is not a number"), 1);
+	if (ft_atoi(argv[1]) < 1 && ft_atoi(argv[1]) != getpid())
+		return (ft_printf("Don't ruin the session!\n"), 1);
+	if (-1 == sigaction(SIGUSR1, &info, NULL))
+		return (-1);
+	if (-1 == sigaction(SIGUSR2, &info2, NULL))
+		return (-1);
 	send(ft_atoi(argv[1]), argv[2]);
 	return (0);
 }

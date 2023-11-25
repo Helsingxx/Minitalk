@@ -1,38 +1,58 @@
-NAMEC := client
 NAMES := server
-BNAMEC := client_bonus
-BNAMES := server_bonus
-LIB := minitalk.h minitalk_bonus.h
-CFILESC := ft_atoi.c client.c ft_memset.c
-CFILESS :=  ft_atoi.c server.c ft_memset.c
-OFILESC := $(CFILESC:%.c=%.o)
-OFILESS := $(CFILESS:%.c=%.o)
-CFLAGS := -Wall -Wextra -Werror
-CC := cc
-PRINTF := ft_printf/libftprintf.a
-all: $(NAMES) $(NAMEC)
-$(NAMES): $(OFILESS) 
-	$(MAKE) -C ft_printf
-	$(CC) $(OFILESS) $(PRINTF) -o server $(CFLAGS)
-$(NAMEC): $(OFILESC)
-	$(CC) $(OFILESC) $(PRINTF) -o client $(CFLAGS)
+NAMEC := client
 
-$(BNAMES): ft_atoi.o server_bonus.o ft_memset.o
+BNAMES := server_bonus
+BNAMEC := client_bonus
+
+LIB := minitalk.h minitalk_bonus.h ft_printf/ft_printf.h
+PRINTF := ft_printf/libftprintf.a
+
+CFILESS := server.c
+CFILESC := tools.c client.c
+OFILESS := $(CFILESS:%.c=%.o)
+OFILESC := $(CFILESC:%.c=%.o)
+
+BS :=  server_bonus.c
+BC := tools_bonus.c client_bonus.c
+OBS := $(BS:%.c=%.o)
+OBC := $(BC:%.c=%.o)
+
+
+ADDITIONAL := ft_atoi.c
+ADDO := $(ADDITIONAL:%.c=%.o)
+CC := cc
+CFLAGS := -Wall -Wextra -Werror
+
+all: $(NAMES) $(NAMEC)
+
+$(NAMES): $(OFILESS) $(ADDO)
 	$(MAKE) -C ft_printf
-	$(CC) ft_atoi.o server_bonus.o ft_memset.o $(PRINTF) -o server_bonus $(CFLAGS)
-$(BNAMEC): ft_atoi.o client_bonus.o ft_memset.o
-	$(CC) ft_atoi.o client_bonus.o ft_memset.o $(PRINTF) -o client_bonus $(CFLAGS)
+	$(CC) $^ $(PRINTF) -o $@ $(CFLAGS)
+
+$(NAMEC): $(OFILESC) $(ADDO)
+	$(MAKE) -C ft_printf
+	$(CC) $^ $(PRINTF) -o $@ $(CFLAGS)
+
+$(BNAMES): $(OBS) $(ADDO)
+	$(MAKE) -C ft_printf
+	$(CC) $^ $(PRINTF) -o $@ $(CFLAGS)
+
+$(BNAMEC): $(OBC) $(ADDO)
+	$(CC) $^ $(PRINTF) -o $@ $(CFLAGS)
 
 %.o: %.c $(LIB)
-	$(CC) -Wall -Wextra -Werror $< -c
+	$(CC) $< -c $(CFLAGS)
+
 clean:
 	$(MAKE) -C ft_printf clean
-	rm -rf $(OFILESS) $(OFILESC) ft_atoi.o client_bonus.o ft_memset.o server_bonus.o
+	rm -rf $(OFILESS) $(OFILESC) $(OBS) $(OBC) $(ADDO)
+
 fclean: clean
 	$(MAKE) -C ft_printf fclean
-	rm -rf  $(NAMES) $(NAMEC) $(BNAMES) $(BNAMEC)
+	rm -rf $(NAMES) $(NAMEC) $(BNAMES) $(BNAMEC)
+
 re: fclean all
 
 bonus: $(BNAMES) $(BNAMEC)
 
-.PHONY:	clean fclean re all
+.PHONY:	clean fclean re all bonus

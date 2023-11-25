@@ -1,28 +1,45 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ft_memset.c                                        :+:      :+:    :+:   */
+/*   tools.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: eamrati <eamrati@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2022/10/06 22:07:17 by eamrati           #+#    #+#             */
-/*   Updated: 2022/10/19 15:13:54 by eamrati          ###   ########.fr       */
+/*   Created: 2023/11/25 18:08:51 by eamrati           #+#    #+#             */
+/*   Updated: 2023/11/25 18:31:05 by eamrati          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <stdlib.h>
+#include "minitalk.h"
 
-void	*ft_memset(void *b, int c, size_t len)
+void	detour(char *c, int *inner, int *a, pid_t pid)
 {
-	size_t			a;
-	unsigned char	*bc;
-
-	a = 0;
-	bc = (unsigned char *)b;
-	while (a < len)
+	if (*c & 0x01)
 	{
-		bc[a] = (unsigned char)c;
-		a++;
+		*c >>= 1;
+		(*inner)++;
+		if (!(*inner < 8))
+			(*a)++;
+		kill(pid, SIGUSR2);
 	}
-	return (b);
+	else
+	{
+		*c >>= 1;
+		(*inner)++;
+		if (!(*inner < 8))
+			(*a)++;
+		kill(pid, SIGUSR1);
+	}
+}
+
+void	detour_time(uint64_t *time)
+{
+	while (!g_rec)
+	{
+		if (!((*time)++ < TIME))
+		{
+			ft_printf("Server is unavailable!\n");
+			exit(0);
+		}
+	}
 }
